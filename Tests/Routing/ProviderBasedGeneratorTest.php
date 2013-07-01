@@ -87,6 +87,15 @@ class ProviderBasedGeneratorTest extends CmfUnitTestCase
         $this->assertContains('/de/test', $this->generator->getRouteDebugMessage(new Route('/de/test')));
         $this->assertContains('/some/route', $this->generator->getRouteDebugMessage('/some/route'));
     }
+
+    public function testGenerateByRoute()
+    {
+        $route = new Route('/test');
+        $route->setRequirement('number', '\+d');
+
+        $this->generator->setStrictRequirements(TRUE);
+        $this->generator->generate($route, array('number' => 'string'));
+    }
 }
 
 /**

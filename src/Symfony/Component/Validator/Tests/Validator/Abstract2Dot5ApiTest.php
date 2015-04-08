@@ -716,6 +716,17 @@ abstract class Abstract2Dot5ApiTest extends AbstractValidatorTest
     }
 
     public function testNestedObjectsValidate() {
+        $entity = new Entity();
+        $entity->firstName = 1;
+
+        $entity1 = new Entity1();
+        $entity1->firstName = 2;
+        $entity->subEntity = $entity1;
+
+        $entity2 = new Entity2();
+        $entity2->firstName = 3;
+        $entity1->subEntity = $entity2;
+
         $callback = function ($value, ExecutionContextInterface $context) {
             $context->addViolation('value: ' . $value);
         };
@@ -727,31 +738,28 @@ abstract class Abstract2Dot5ApiTest extends AbstractValidatorTest
         $property_metadata0->addConstraint(clone $property_constraint);
         $property_metadata1 = new PropertyMetadata('Symfony\Component\Validator\Tests\Fixtures\Entity1', 'firstName');
         $property_metadata1->addConstraint(clone $property_constraint);
-//        $property_metadata2 = new PropertyMetadata('Symfony\Component\Validator\Tests\Fixtures\Entity2', 'firstName');
-//        $property_metadata2->addConstraint(clone $property_constraint);
+        $property_metadata2 = new PropertyMetadata('Symfony\Component\Validator\Tests\Fixtures\Entity2', 'firstName');
+        $property_metadata2->addConstraint(clone $property_constraint);
 
-//        $propertyclass_metadata1 = new NestedClassPropertyMetadata('subEntity');
-//        $propertyclass_metadata1->className = 'Symfony\Component\Validator\Tests\Fixtures\Entity2';
-//        $propertyclass_metadata1->constrains = array();
-//        $propertyclass_metadata1->properties = array('firstName', 'subEntity');
-//        $propertyclass_metadata1->metadata['firstName'] = array($property_metadata1);
-//        $propertyclass_metadata1->cascadingStragy = CascadingStrategy::NONE;
-
-//        $entity1_metadata = new ClassMetadata('Symfony\Component\Validator\Tests\Fixtures\Entity1');
-//        $entity1_metadata->addPropertyConstraint('firstName', clone $property_constraint);
+        $entity1_subentity_metadata = new NestedClassPropertyMetadata('subEntity');
+        $entity1_subentity_metadata->className = 'Symfony\Component\Validator\Tests\Fixtures\Entity2';
+        $entity1_subentity_metadata->constrains = array();
+        $entity1_subentity_metadata->properties = array('firstName');
+        $entity1_subentity_metadata->metadata['firstName'] = array($property_metadata1);
+        $entity1_subentity_metadata->cascadingStragy = CascadingStrategy::CASCADE;
 
         $entity0_subentity_metadata = new NestedClassPropertyMetadata('subEntity');
         $entity0_subentity_metadata->className = 'Symfony\Component\Validator\Tests\Fixtures\Entity1';
         $entity0_subentity_metadata->constrains = array();
-         $entity0_subentity_metadata->properties = array('firstName');
-//        $entity0_subentity_metadata->properties = array('firstName');
+        $entity0_subentity_metadata->properties = array('firstName', 'subEntity');
         $entity0_subentity_metadata->metadata['firstName'] = array($property_metadata1);
-        // $entity0_subentity_metadata->metadata['subEntity'] = array($entity1_metadata);
-        $entity0_subentity_metadata->cascadingStragy = CascadingStrategy::NONE;
+        $entity0_subentity_metadata->metadata['subEntity'] = array($entity1_subentity_metadata);
+        $entity0_subentity_metadata->cascadingStragy = CascadingStrategy::CASCADE;
 
         $entity0_metadata = new NestedClassMetadata();
         $entity0_metadata->className = 'Symfony\Component\Validator\Tests\Fixtures\Entity';
-        $entity0_metadata->properties = array('firstName', 'subEntity');
+         $entity0_metadata->properties = array('firstName', 'subEntity');
+//        $entity0_metadata->properties = array('subEntity');
         $entity0_metadata->metadata['firstName'] = array($property_metadata0);
         $entity0_metadata->metadata['subEntity'] = array($entity0_subentity_metadata);
         $entity0_metadata->cascadingStragy = CascadingStrategy::CASCADE;
@@ -759,28 +767,21 @@ abstract class Abstract2Dot5ApiTest extends AbstractValidatorTest
         $this->metadataFactory = $this->getMock('\Symfony\Component\Validator\Mapping\Factory\MetadataFactoryInterface');
         $this->metadataFactory->expects($this->any())
             ->method('getMetadataFor')
-            ->willReturnCallback(function ($element) use ($entity0_metadata, $entity0_subentity_metadata, $property_metadata0, $property_metadata1) {
+            ->willReturnCallback(function ($element) use ($entity0_metadata, $entity0_subentity_metadata, $property_metadata0, $property_metadata1, $entity1_subentity_metadata) {
                 if (is_object($element) && get_class($element) == 'Symfony\Component\Validator\Tests\Fixtures\Entity') {
                     return $entity0_metadata;
                 }
-//                if (is_object($element) && get_class($element) == 'Symfony\Component\Validator\Tests\Fixtures\Entity1') {
-//                    return $entity1_metadata;
-//                }
+                if (is_object($element) && get_class($element) == 'Symfony\Component\Validator\Tests\Fixtures\Entity1') {
+                    return $entity0_subentity_metadata;
+                }
+                if (is_object($element) && get_class($element) == 'Symfony\Component\Validator\Tests\Fixtures\Entity2') {
+                    return $entity1_subentity_metadata;
+                }
             });
         $this->validator = $this->createValidator($this->metadataFactory);
 
-        $entity = new Entity();
-        $entity->firstName = 1;
-        $entity2 = new Entity1();
-        $entity2->firstName = 2;
-        $entity->subEntity = $entity2;
-
-//        $entity3 = new Entity2();
-//        $entity3->firstName = 3;
-
-
         $violations = $this->validator->validate($entity);
-        $this->assertCount(2, $violations);
+        $this->assertCount(3, $violations);
     }
 
 }

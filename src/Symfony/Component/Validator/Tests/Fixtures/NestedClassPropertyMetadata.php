@@ -28,7 +28,7 @@ class NestedClassPropertyMetadata extends NestedClassMetadata implements Propert
      */
     public function getPropertyValue($containingValue)
     {
-        return $containingValue;
+        return $containingValue->{$this->propertyName};
     }
 
 }
